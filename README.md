@@ -11,24 +11,24 @@ The full product requirements are documented in `prd.md`.
 ## Files
 
 - `prd.md` — product requirements document and feature spec
-- `Spin the Wheel.dc.html` — main web app HTML file
-- `support.js` — app logic and interactions
-- `config-title.png` — project title graphic
-- `tex/` — supporting assets or documents
-- `uploads/` — uploaded assets used by the app
+- `public/index.html` — main web app entrypoint
+- `public/support.js` — app logic and interactions
+- `public/assets/images/config-title.png` — project title graphic
+- `public/assets/tex/` — supporting textures and graphics
+- `public/uploads/` — local reference assets, not committed to git (see `.gitignore`) and not currently referenced by the app
 
 ## Running the App
 
-This is a static app. Open `Spin the Wheel.dc.html` directly in your browser, or serve the directory with a simple local HTTP server.
+This is a static app. Serve the `public/` directory with a simple local HTTP server.
 
 ### Using Python
 
 ```bash
-cd /Users/samanthavp/Documents/Code/config-spin-the-wheel
+cd public
 python3 -m http.server 8000
 ```
 
-Then open `http://localhost:8000/Spin%20the%20Wheel.dc.html`.
+Then open `http://localhost:8000`.
 
 ## Git Documentation
 

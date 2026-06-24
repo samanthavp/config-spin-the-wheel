@@ -13,3 +13,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Project artifacts
+.thumbnail
+public/uploads/
