@@ -120,19 +120,16 @@
     </div>
 
     <!-- legend column -->
-    <div style="flex:1.4 1 380px;min-width:280px;max-width:600px;width:100%">
+    <div style="flex:1.4 1 460px;min-width:340px;max-width:680px;width:100%">
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
         <span style="font-size:13px;font-weight:600;color:#8a8a92;text-transform:uppercase;letter-spacing:.07em">Prize legend</span>
         <span style="font-size:12px;color:#6a6a72">{{ activeCount }} live</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px 10px">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px 14px">
         <sc-for list="{{ legendPrizes }}" as="p" hint-placeholder-count="8">
           <div style="{{ p.pillStyle }}" style-hover="filter:brightness(1.07)" onMouseEnter="{{ p.onEnter }}" onMouseLeave="{{ p.onLeave }}">
             <span style="{{ p.nameStyle }}">{{ p.name }}</span>
-            <div style="display:flex;align-items:center;gap:9px;flex:0 0 auto">
-              <span style="{{ p.pctStyle }}">{{ p.pctLabel }}</span>
-              <span style="{{ p.badgeStyle }}">{{ p.badgeText }}</span>
-            </div>
+            <span style="{{ p.badgeStyle }}">{{ p.badgeText }}</span>
           </div>
         </sc-for>
       </div>
@@ -552,14 +549,12 @@ class Component extends DCLogic {
       const dead = p.deleted || p.qty <= 0;
       const bg = dead ? '#26262a' : p.color;
       const tc = dead ? '#8a8a90' : this.contrast(p.color);
-      const pct = !dead ? Math.round(p.weight / tot * 100) : 0;
       const isHov = !dead && hov === p.id;
       const dimP = anyHover && !isHov;
       return {
-        name: p.name, badgeText: String(p.qty), pctLabel: dead ? '\u2014' : (pct + '%'),
-        pillStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '9px 13px', borderRadius: '999px', background: bg, opacity: dimP ? 0.5 : 1, transform: isHov ? 'scale(1.03)' : 'none', boxShadow: isHov ? '0 0 0 2px #fff, 0 8px 22px rgba(0,0,0,.35)' : 'none', cursor: dead ? 'default' : 'pointer', transition: 'background .4s ease, transform .15s ease, box-shadow .15s ease, opacity .15s ease, filter .2s ease' },
-        nameStyle: { fontWeight: 600, fontSize: '16px', color: tc, textDecoration: dead ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 },
-        pctStyle: { fontSize: '13px', color: tc, opacity: 0.78, fontWeight: 600 },
+        name: p.name, badgeText: String(p.qty),
+        pillStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '9px 13px', borderRadius: '18px', background: bg, opacity: dimP ? 0.5 : 1, transform: isHov ? 'scale(1.03)' : 'none', boxShadow: isHov ? '0 0 0 2px #fff, 0 8px 22px rgba(0,0,0,.35)' : 'none', cursor: dead ? 'default' : 'pointer', transition: 'background .4s ease, transform .15s ease, box-shadow .15s ease, opacity .15s ease, filter .2s ease' },
+        nameStyle: { fontWeight: 600, fontSize: '15px', lineHeight: '1.25', color: tc, textDecoration: dead ? 'line-through' : 'none', whiteSpace: 'normal', wordBreak: 'break-word', minWidth: 0 },
         badgeStyle: { minWidth: '26px', textAlign: 'center', fontWeight: 700, fontSize: '13px', padding: '2px 8px', borderRadius: '999px', background: dead ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.16)', color: tc },
         onEnter: dead ? null : (() => this.setHover(p.id)),
         onLeave: () => this.setHover(null)
