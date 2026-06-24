@@ -17,3 +17,8 @@ Thumbs.db
 # Project artifacts
 .thumbnail
 public/uploads/
+.vercel
+.env*
+
+# Dependencies
+node_modules/

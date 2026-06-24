@@ -96,17 +96,28 @@ Accessed via a toggle button or an expandable drawer (not a separate page — ke
 
 | # | Prize | Qty | Default Weight |
 |---|-------|-----|----------------|
-| 1 | FoF Tote Bag | 126 | 126 |
-| 2 | Figma Pin | 36 | 36 |
-| 3 | Figma Coloured Pen | 15 | 15 |
-| 4 | Figma Sticker Sheet | 13 | 13 |
-| 5 | Sticker | 170 | 170 |
-| 6 | Figma Washi Tape | 4 | 4 |
-| 7 | Questrade Baseball Cap | 40 | 40 |
-| 8 | Questrade Mug | 50 | 50 |
-| 9 | Questrade Water Bottle | 25 | 25 |
-| 10 | Questrade Fidget Toy | 70 | 70 |
-| 11 | Questrade Notebook | 100 | 100 |
+| 1 | "Meet me in the browser" cap | 5 | 5 |
+| 2 | Blue Figma Cap | 5 | 5 |
+| 3 | Baggu Bag | 10 | 10 |
+| 4 | Washi Tape | 20 | 20 |
+| 5 | Mini Pouch | 10 | 10 |
+| 6 | Figma Patch | 20 | 20 |
+| 7 | FoF Toronto T-shirt | 80 | 80 |
+| 8 | 2026 FoF Toronto Tote | 120 | 120 |
+| 9 | FoF Toronto Sticker Sheet | 50 | 50 |
+| 10 | 2025 FoF Toronto Tote | 106 | 106 |
+| 11 | FoF Pin | 25 | 25 |
+| 12 | FoF Coloured Pen | 10 | 10 |
+| 13 | Config 2026 Tote | 7 | 7 |
+| 14 | Config 2026 Hat | 140 | 140 |
+| 15 | Config Stickers | 100 | 100 |
+| 16 | Config 2026 Pin | 120 | 120 |
+| 17 | QT Fidget Toy | 40 | 40 |
+| 18 | QT Baseball Cap | 15 | 15 |
+| 19 | QT Tumbler | 8 | 8 |
+| 20 | QT Water Bottle | 12 | 12 |
+| 21 | QT Mug | 15 | 15 |
+| 22 | QT Notebook | 25 | 25 |
 
 > Default weights are set equal to quantity so that initial probability is proportional to stock — higher-stock items appear more often. Organizers can override these at any time.
 

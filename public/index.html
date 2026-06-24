@@ -50,7 +50,7 @@
   <div style="position:relative;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:clamp(16px,3vw,34px)">
     <div>
       <img src="./assets/images/config-title.png" alt="CONFIG Watch Party 2026 Toronto" style="display:block;height:clamp(64px,10vw,112px);width:auto;max-width:100%">
-      <div style="font-size:13px;color:#9a9aa2;margin-top:10px;font-weight:500">Merch giveaway — walk up, tap spin, win swag</div>
+      <div style="font-size:13px;color:#9a9aa2;margin-top:10px;font-weight:500"></div>
     </div>
     <button onClick="{{ toggleAdmin }}" style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.16);color:#fff;font-weight:600;font-size:13px;padding:10px 16px;border-radius:999px;cursor:pointer;transition:background .2s,transform .15s" style-hover="background:rgba(255,255,255,.12);transform:translateY(-1px)">
       <span style="font-size:15px">⚙</span> Manage prizes
@@ -100,6 +100,13 @@
           <span style="font-size:clamp(19px,3.3vw,29px);font-weight:800;color:#fff;letter-spacing:.02em;line-height:1">{{ spinLabel }}</span>
         </button>
 
+        <!-- loading overlay -->
+        <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);text-align:center;z-index:4;width:70%">
+            <div style="font-size:15px;font-weight:600;color:#9a9aa2">Loading prizes…</div>
+          </div>
+        </sc-if>
+
         <!-- empty overlay -->
         <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
           <div style="position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);text-align:center;z-index:4;width:70%">
@@ -113,12 +120,12 @@
     </div>
 
     <!-- legend column -->
-    <div style="flex:1 1 280px;min-width:240px;max-width:340px;width:100%">
+    <div style="flex:1.4 1 380px;min-width:280px;max-width:600px;width:100%">
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
         <span style="font-size:13px;font-weight:600;color:#8a8a92;text-transform:uppercase;letter-spacing:.07em">Prize legend</span>
         <span style="font-size:12px;color:#6a6a72">{{ activeCount }} live</span>
       </div>
-      <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px 10px">
         <sc-for list="{{ legendPrizes }}" as="p" hint-placeholder-count="8">
           <div style="{{ p.pillStyle }}" style-hover="filter:brightness(1.07)" onMouseEnter="{{ p.onEnter }}" onMouseLeave="{{ p.onLeave }}">
             <span style="{{ p.nameStyle }}">{{ p.name }}</span>
@@ -244,16 +251,20 @@ class Component extends DCLogic {
 
   makePrizes() {
     const d = [
-      ['Sticker Pack', 40, 30], ['Enamel Pin', 25, 20], ['Tote Bag', 15, 12],
-      ['Dev T-Shirt', 10, 8], ['Cozy Hoodie', 4, 4], ['Water Bottle', 12, 10],
-      ['Snapback Cap', 8, 6], ['Crew Socks', 18, 14], ['Notebook', 20, 16],
-      ['Mech Keyboard', 1, 1], ['Camp Mug', 14, 11]
+      ['"Meet me in the browser" cap', 5], ['Blue Figma Cap', 5], ['Baggu Bag', 10],
+      ['Washi Tape', 20], ['Mini Pouch', 10], ['Figma Patch', 20],
+      ['FoF Toronto T-shirt', 80], ['2026 FoF Toronto Tote', 120], ['FoF Toronto Sticker Sheet', 50],
+      ['2025 FoF Toronto Tote', 106], ['FoF Pin', 25], ['FoF Coloured Pen', 10],
+      ['Config 2026 Tote', 7], ['Config 2026 Hat', 140], ['Config Stickers', 100],
+      ['Config 2026 Pin', 120], ['QT Fidget Toy', 40], ['QT Baseball Cap', 15],
+      ['QT Tumbler', 8], ['QT Water Bottle', 12], ['QT Mug', 15], ['QT Notebook', 25]
     ];
-    return d.map((x, i) => ({ id: 'p' + (i + 1), name: x[0], qty: x[1], initialQty: x[1], weight: x[2], color: this.palette[i % this.palette.length], deleted: false }));
+    return d.map((x, i) => ({ id: 'p' + (i + 1), name: x[0], qty: x[1], initialQty: x[1], weight: x[1], color: this.palette[i % this.palette.length], deleted: false }));
   }
 
   state = {
-    prizes: this.makePrizes(),
+    prizes: [],
+    loading: true,
     rotation: 0,
     rotorTransition: 'none',
     spinning: false,
@@ -269,8 +280,50 @@ class Component extends DCLogic {
 
   setHover(id) { if (this.state.spinning) return; if (this.state.hoveredId !== id) this.setState({ hoveredId: id }); }
 
+  // ---- server sync ----
+  componentDidMount() {
+    fetch('/api/state').then(r => r.json()).then(data => {
+      this.setState({
+        prizes: Array.isArray(data.prizes) ? data.prizes : this.makePrizes(),
+        history: Array.isArray(data.history) ? data.history : [],
+        soundOn: data.soundOn !== undefined ? !!data.soundOn : true,
+        loading: false
+      });
+    }).catch(() => {
+      // API unreachable (e.g. pre-deploy / offline) — fall back to local seed so the wheel still works.
+      this.setState({ prizes: this.makePrizes(), loading: false });
+    });
+    this._pollT = setInterval(() => this.pollState(), 4000);
+  }
+
+  pollState() {
+    if (this.state.spinning || this.state.modalOpen) return; // don't undercut an in-flight spin/result
+    fetch('/api/state').then(r => r.json()).then(data => {
+      if (this.state.spinning || this.state.modalOpen) return;
+      this.setState({
+        prizes: Array.isArray(data.prizes) ? data.prizes : this.state.prizes,
+        history: Array.isArray(data.history) ? data.history : this.state.history,
+        soundOn: data.soundOn !== undefined ? !!data.soundOn : this.state.soundOn
+      });
+    }).catch(() => {});
+  }
+
+  scheduleAdminPush() {
+    clearTimeout(this._adminPushT);
+    this._adminPushT = setTimeout(() => this.pushAdminNow(), 500);
+  }
+  pushAdminNow() {
+    clearTimeout(this._adminPushT);
+    fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prizes: this.state.prizes, soundOn: this.state.soundOn })
+    }).catch(() => {});
+  }
+
   componentWillUnmount() {
-    clearTimeout(this._spinT); clearTimeout(this._dT); cancelAnimationFrame(this._raf);
+    clearTimeout(this._spinT); clearTimeout(this._dT); clearTimeout(this._adminPushT);
+    clearInterval(this._pollT); cancelAnimationFrame(this._raf);
   }
 
   // ---- geometry ----
@@ -329,6 +382,9 @@ class Component extends DCLogic {
     const prize = this.state.prizes.find(p => p.id === id);
     if (!prize) { this.setState({ spinning: false }); return; }
     const entry = { time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), name: prize.name, color: prize.color };
+    // Optimistic local decrement for instant feedback, reconciled with the server's
+    // authoritative count below (server uses an atomic decrement so concurrent
+    // spins from other laptops can't silently clobber this one).
     this.setState(s => ({
       prizes: s.prizes.map(p => p.id === id ? { ...p, qty: Math.max(0, p.qty - 1) } : p),
       history: [entry, ...s.history].slice(0, 100),
@@ -337,6 +393,13 @@ class Component extends DCLogic {
     }));
     if (this.props.confetti ?? true) this.fireConfetti();
     this.playWin();
+    fetch('/api/spin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prizeId: id })
+    }).then(r => r.ok ? r.json() : null).then(data => {
+      if (data) this.setState({ prizes: data.prizes, history: data.history });
+    }).catch(() => {});
   }
 
   dismiss() {
@@ -403,15 +466,22 @@ class Component extends DCLogic {
   }
 
   // ---- admin ----
-  updatePrize(id, field, value) { this.setState(s => ({ prizes: s.prizes.map(p => p.id === id ? { ...p, [field]: value } : p) })); }
+  updatePrize(id, field, value) {
+    this.setState(s => ({ prizes: s.prizes.map(p => p.id === id ? { ...p, [field]: value } : p) }));
+    this.scheduleAdminPush();
+  }
   addPrize() {
     const n = (this.state.newName || '').trim(); if (!n) return;
     const q = Math.max(0, parseInt(this.state.newQty, 10) || 0);
     const w = Math.max(1, parseFloat(this.state.newWeight) || 1);
     const prize = { id: 'p' + (this._nid++), name: n, qty: q, initialQty: q, weight: w, color: this.state.newColor, deleted: false };
     this.setState(s => ({ prizes: [...s.prizes, prize], newName: '', newQty: '10', newWeight: '10' }));
+    this.pushAdminNow();
   }
-  resetAll() { this.setState(s => ({ prizes: s.prizes.map(p => ({ ...p, qty: p.initialQty, deleted: false })) })); }
+  resetAll() {
+    this.setState(s => ({ prizes: s.prizes.map(p => ({ ...p, qty: p.initialQty, deleted: false })) }));
+    this.pushAdminNow();
+  }
   toggleAdmin = () => this.setState(s => ({ adminOpen: !s.adminOpen }));
   closeAdmin = () => this.setState({ adminOpen: false });
   toggleSound = () => this.setState(s => ({ soundOn: !s.soundOn }));
@@ -429,6 +499,7 @@ class Component extends DCLogic {
           history: Array.isArray(obj.history) ? obj.history : this.state.history,
           soundOn: obj.soundOn !== undefined ? !!obj.soundOn : this.state.soundOn
         });
+        this.pushAdminNow();
       } catch (err) {}
     };
     reader.readAsText(f); e.target.value = '';
@@ -448,7 +519,8 @@ class Component extends DCLogic {
     const accent = this.props.accent ?? '#6C5CE7';
     const g = this.geometry();
     const { avail, cx, cy, r, tot, segments } = g;
-    const isEmpty = avail.length === 0, isSingle = avail.length === 1, isMulti = avail.length >= 2;
+    const loading = this.state.loading;
+    const isEmpty = avail.length === 0 && !loading, isSingle = avail.length === 1, isMulti = avail.length >= 2;
 
     const hov = this.state.spinning ? null : this.state.hoveredId;
     const anyHover = hov != null;
@@ -485,10 +557,10 @@ class Component extends DCLogic {
       const dimP = anyHover && !isHov;
       return {
         name: p.name, badgeText: String(p.qty), pctLabel: dead ? '\u2014' : (pct + '%'),
-        pillStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '11px 15px', borderRadius: '999px', background: bg, opacity: dimP ? 0.5 : 1, transform: isHov ? 'scale(1.03)' : 'none', boxShadow: isHov ? '0 0 0 2px #fff, 0 8px 22px rgba(0,0,0,.35)' : 'none', cursor: dead ? 'default' : 'pointer', transition: 'background .4s ease, transform .15s ease, box-shadow .15s ease, opacity .15s ease, filter .2s ease' },
-        nameStyle: { fontWeight: 600, fontSize: '14px', color: tc, textDecoration: dead ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 },
-        pctStyle: { fontSize: '11px', color: tc, opacity: 0.78, fontWeight: 600 },
-        badgeStyle: { minWidth: '24px', textAlign: 'center', fontWeight: 700, fontSize: '12px', padding: '2px 8px', borderRadius: '999px', background: dead ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.16)', color: tc },
+        pillStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '9px 13px', borderRadius: '999px', background: bg, opacity: dimP ? 0.5 : 1, transform: isHov ? 'scale(1.03)' : 'none', boxShadow: isHov ? '0 0 0 2px #fff, 0 8px 22px rgba(0,0,0,.35)' : 'none', cursor: dead ? 'default' : 'pointer', transition: 'background .4s ease, transform .15s ease, box-shadow .15s ease, opacity .15s ease, filter .2s ease' },
+        nameStyle: { fontWeight: 600, fontSize: '16px', color: tc, textDecoration: dead ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 },
+        pctStyle: { fontSize: '13px', color: tc, opacity: 0.78, fontWeight: 600 },
+        badgeStyle: { minWidth: '26px', textAlign: 'center', fontWeight: 700, fontSize: '13px', padding: '2px 8px', borderRadius: '999px', background: dead ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.16)', color: tc },
         onEnter: dead ? null : (() => this.setHover(p.id)),
         onLeave: () => this.setHover(null)
       };
@@ -503,8 +575,8 @@ class Component extends DCLogic {
       onName: (e) => this.updatePrize(p.id, 'name', e.target.value),
       onQty: (e) => this.updatePrize(p.id, 'qty', Math.max(0, parseInt(e.target.value || '0', 10) || 0)),
       onWeight: (e) => this.updatePrize(p.id, 'weight', Math.max(1, parseFloat(e.target.value || '1') || 1)),
-      toggleSoft: () => this.updatePrize(p.id, 'deleted', !p.deleted),
-      hardDelete: () => this.setState(s => ({ prizes: s.prizes.filter(x => x.id !== p.id) }))
+      toggleSoft: () => { this.updatePrize(p.id, 'deleted', !p.deleted); this.pushAdminNow(); },
+      hardDelete: () => { this.setState(s => ({ prizes: s.prizes.filter(x => x.id !== p.id) })); this.pushAdminNow(); }
     }));
 
     const newColorSwatches = this.palette.map(c => ({
@@ -522,7 +594,7 @@ class Component extends DCLogic {
 
     return {
       rotorStyle: { position: 'absolute', inset: 0, transform: `rotate(${this.state.rotation}deg)`, transition: this.state.rotorTransition, transformOrigin: 'center', willChange: 'transform' },
-      isEmpty, isSingle, isMulti, single,
+      loading, isEmpty, isSingle, isMulti, single,
       segments: segOut, dots,
       legendPrizes, activeCount: avail.length,
       spinLabel: this.state.spinning ? 'SPINNING' : (isEmpty ? 'SOLD OUT' : 'SPIN'),
