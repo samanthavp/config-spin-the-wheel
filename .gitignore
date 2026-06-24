@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor directories and files
+.vscode/
+*.swp
+*~
+
+# System files
+Thumbs.db
+
+# Logs
+*.log

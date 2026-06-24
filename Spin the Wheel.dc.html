@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Funnel+Sans:wght@300..800&amp;display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#0a0a0a;font-family:'Funnel Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  input,button{font-family:inherit}
+  input::placeholder{color:#a6a6ad}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#d6d6db;border-radius:9px}
+  @keyframes wheelIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+  @keyframes modalIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes modalOut{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(8px) scale(.94)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+
+<div style="position:relative;min-height:100vh;width:100%;background:#0a0a0a;color:#fff;overflow-x:hidden;padding:clamp(18px,3.5vw,40px)">
+
+  <!-- graffiti / splatter background -->
+  <div aria-hidden="true" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0">
+    <img src="tex/spray.png" alt="" style="position:absolute;top:-10%;left:-14%;width:74%;opacity:.5;transform:rotate(6deg)">
+    <img src="tex/spray.png" alt="" style="position:absolute;bottom:-16%;right:-12%;width:68%;opacity:.4;transform:rotate(192deg)">
+    <img src="tex/spray.png" alt="" style="position:absolute;top:34%;right:-8%;width:42%;opacity:.28;transform:rotate(86deg)">
+    <div style="position:absolute;top:-96px;right:17%;width:150px;height:185px;background:#FB3A2E;transform:rotate(8deg);overflow:hidden;opacity:.55">
+      <img src="tex/blobs.png" alt="" style="position:absolute;inset:-12%;width:124%;height:124%;opacity:.92">
+    </div>
+    <div style="position:absolute;bottom:-84px;left:-52px;width:240px;height:220px;background:#2BB0F4;transform:rotate(-5deg);overflow:hidden;opacity:.62">
+      <img src="tex/spray.png" alt="" style="position:absolute;top:-30%;left:-20%;width:150%;opacity:.95;transform:rotate(30deg)">
+    </div>
+    <div style="position:absolute;bottom:-42px;right:-32px;width:155px;height:155px;background:#B583E6;transform:rotate(6deg);overflow:hidden;opacity:.55">
+      <img src="tex/blobs.png" alt="" style="position:absolute;inset:-12%;width:124%;height:124%;opacity:.92">
+    </div>
+    <div style="position:absolute;top:44%;left:-56px;width:150px;height:150px;background:#2ECC6F;transform:rotate(-8deg);overflow:hidden;opacity:.55">
+      <img src="tex/blobs.png" alt="" style="position:absolute;inset:-12%;width:124%;height:124%;opacity:.9">
+    </div>
+  </div>
+
+  <!-- header -->
+  <div style="position:relative;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:clamp(16px,3vw,34px)">
+    <div>
+      <img src="config-title.png" alt="CONFIG Watch Party 2026 Toronto" style="display:block;height:clamp(64px,10vw,112px);width:auto;max-width:100%">
+      <div style="font-size:13px;color:#9a9aa2;margin-top:10px;font-weight:500">Merch giveaway — walk up, tap spin, win swag</div>
+    </div>
+    <button onClick="{{ toggleAdmin }}" style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.16);color:#fff;font-weight:600;font-size:13px;padding:10px 16px;border-radius:999px;cursor:pointer;transition:background .2s,transform .15s" style-hover="background:rgba(255,255,255,.12);transform:translateY(-1px)">
+      <span style="font-size:15px">⚙</span> Manage prizes
+    </button>
+  </div>
+
+  <!-- main two-column -->
+  <div style="position:relative;z-index:2;display:flex;gap:clamp(22px,4vw,52px);align-items:flex-start;flex-wrap:wrap;justify-content:center">
+
+    <!-- wheel column -->
+    <div style="flex:1 1 480px;min-width:300px;max-width:660px;display:flex;flex-direction:column;align-items:center">
+      <div style="position:relative;width:100%;max-width:600px;aspect-ratio:1;animation:wheelIn .6s cubic-bezier(.2,.8,.2,1) both">
+
+        <!-- rotating wheel -->
+        <div style="{{ rotorStyle }}">
+          <svg viewBox="0 0 600 600" width="100%" height="100%" style="display:block;overflow:visible">
+            <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+              <circle cx="300" cy="300" r="262" fill="#161618" stroke="#2a2a2e" stroke-width="2"></circle>
+            </sc-if>
+            <sc-if value="{{ isSingle }}" hint-placeholder-val="{{ false }}">
+              <circle cx="300" cy="300" r="262" fill="{{ single.fill }}" stroke="#ffffff" stroke-width="3"></circle>
+              <text x="300" y="120" text-anchor="middle" dominant-baseline="middle" fill="{{ single.textColor }}" font-size="26" font-weight="700" font-family="'Funnel Sans',sans-serif">{{ single.label }}</text>
+            </sc-if>
+            <sc-if value="{{ isMulti }}" hint-placeholder-val="{{ true }}">
+              <g>
+                <sc-for list="{{ segments }}" as="seg" hint-placeholder-count="7">
+                  <g onMouseEnter="{{ seg.onEnter }}" onMouseLeave="{{ seg.onLeave }}" style="{{ seg.groupStyle }}">
+                    <path d="{{ seg.path }}" fill="{{ seg.fill }}" stroke="#ffffff" stroke-width="{{ seg.strokeW }}" style="transition:fill .4s ease, stroke-width .2s ease"></path>
+                    <text transform="{{ seg.textTransform }}" text-anchor="middle" dominant-baseline="middle" fill="{{ seg.textColor }}" font-size="{{ seg.fontSize }}" font-weight="600" font-family="'Funnel Sans',sans-serif" style="pointer-events:none">{{ seg.label }}</text>
+                  </g>
+                </sc-for>
+                <sc-for list="{{ dots }}" as="dot" hint-placeholder-count="7">
+                  <circle cx="{{ dot.x }}" cy="{{ dot.y }}" r="3" fill="#ffffff" style="pointer-events:none"></circle>
+                </sc-for>
+              </g>
+            </sc-if>
+          </svg>
+        </div>
+
+        <!-- pointer / ticker -->
+        <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);z-index:6;filter:drop-shadow(0 5px 7px rgba(0,0,0,.45))">
+          <div style="width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-top:32px solid #EEF53A"></div>
+        </div>
+
+        <!-- hub spin button -->
+        <button onClick="{{ spin }}" style="{{ hubStyle }}" style-hover="transform:translate(-50%,-50%) scale(1.05);box-shadow:0 0 52px 10px rgba(108,92,231,.6)">
+          <span style="font-size:clamp(19px,3.3vw,29px);font-weight:800;color:#fff;letter-spacing:.02em;line-height:1">{{ spinLabel }}</span>
+        </button>
+
+        <!-- empty overlay -->
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);text-align:center;z-index:4;width:70%">
+            <div style="font-size:17px;font-weight:700;color:#e9e9ee">No prizes remaining</div>
+            <div style="font-size:13px;color:#83838c;margin-top:4px">Restock in Manage prizes</div>
+          </div>
+        </sc-if>
+      </div>
+
+      
+    </div>
+
+    <!-- legend column -->
+    <div style="flex:1 1 280px;min-width:240px;max-width:340px;width:100%">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+        <span style="font-size:13px;font-weight:600;color:#8a8a92;text-transform:uppercase;letter-spacing:.07em">Prize legend</span>
+        <span style="font-size:12px;color:#6a6a72">{{ activeCount }} live</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <sc-for list="{{ legendPrizes }}" as="p" hint-placeholder-count="8">
+          <div style="{{ p.pillStyle }}" style-hover="filter:brightness(1.07)" onMouseEnter="{{ p.onEnter }}" onMouseLeave="{{ p.onLeave }}">
+            <span style="{{ p.nameStyle }}">{{ p.name }}</span>
+            <div style="display:flex;align-items:center;gap:9px;flex:0 0 auto">
+              <span style="{{ p.pctStyle }}">{{ p.pctLabel }}</span>
+              <span style="{{ p.badgeStyle }}">{{ p.badgeText }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- confetti -->
+  <canvas ref="{{ setConfettiCanvas }}" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:55;pointer-events:none"></canvas>
+
+  <!-- result modal -->
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ dismiss }}" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(10,10,10,.4);padding:24px;animation:fadeIn .2s ease both">
+      <div onClick="{{ stop }}" style="{{ modalCardStyle }}">
+        <div style="{{ modalStripeStyle }}"></div>
+        <div style="font-size:13px;font-weight:700;letter-spacing:.14em;color:#7a7a82;text-transform:uppercase">You won</div>
+        <div style="font-size:clamp(32px,5.2vw,46px);font-weight:800;color:#111;line-height:1.05;margin:10px 0 12px;text-wrap:balance">{{ winnerName }}</div>
+        <div style="font-size:15px;color:#56565e;margin-bottom:24px;text-wrap:pretty">Congratulations! Show this screen at the booth to grab your swag.</div>
+        <button onClick="{{ dismiss }}" style="background:transparent;border:1.5px solid #cfcfd6;color:#111;font-weight:700;font-size:15px;padding:13px 32px;border-radius:999px;cursor:pointer;transition:background .2s,transform .15s" style-hover="background:#f1f1f4;transform:translateY(-1px)">Spin again</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- admin drawer -->
+  <div style="{{ panelStyle }}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:20px 22px;border-bottom:1px solid #ececef;flex:0 0 auto">
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#111">Manage prizes</div>
+        <div style="font-size:12px;color:#8a8a90;margin-top:2px">Changes apply to the wheel live</div>
+      </div>
+      <button onClick="{{ closeAdmin }}" style="width:34px;height:34px;border-radius:999px;border:none;background:#f1f1f4;color:#444;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s" style-hover="background:#e4e4e9">✕</button>
+    </div>
+
+    <div style="overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:26px;flex:1 1 auto">
+
+      <!-- add -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#6b6b72;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Add a prize</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <input value="{{ newName }}" onInput="{{ onNewName }}" placeholder="Prize name" style="padding:11px 16px;border:1.5px solid #e2e2e6;border-radius:999px;font-size:14px;color:#111;background:#fff;outline:none;transition:border-color .15s,box-shadow .15s" style-focus="border-color:#2BB0F4;box-shadow:0 0 0 3px rgba(43,176,244,.18)">
+          <div style="display:flex;gap:10px">
+            <input value="{{ newQty }}" onInput="{{ onNewQty }}" type="number" min="0" placeholder="Qty" style="flex:1;min-width:0;padding:11px 14px;border:1.5px solid #e2e2e6;border-radius:999px;font-size:14px;color:#111;background:#fff;outline:none;transition:border-color .15s,box-shadow .15s" style-focus="border-color:#2BB0F4;box-shadow:0 0 0 3px rgba(43,176,244,.18)">
+            <input value="{{ newWeight }}" onInput="{{ onNewWeight }}" type="number" min="1" placeholder="Weight" style="flex:1;min-width:0;padding:11px 14px;border:1.5px solid #e2e2e6;border-radius:999px;font-size:14px;color:#111;background:#fff;outline:none;transition:border-color .15s,box-shadow .15s" style-focus="border-color:#2BB0F4;box-shadow:0 0 0 3px rgba(43,176,244,.18)">
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 2px">
+            <sc-for list="{{ newColorSwatches }}" as="sw" hint-placeholder-count="12">
+              <div style="{{ sw.swStyle }}" onClick="{{ sw.pick }}"></div>
+            </sc-for>
+          </div>
+          <button onClick="{{ addPrize }}" style="background:linear-gradient(135deg,#2BB0F4,#6C5CE7);color:#fff;border:none;font-weight:700;font-size:14px;padding:12px;border-radius:999px;cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:0 6px 16px rgba(108,92,231,.28)" style-hover="transform:translateY(-1px);box-shadow:0 10px 22px rgba(108,92,231,.4)">Add prize</button>
+        </div>
+      </div>
+
+      <!-- list -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span style="font-size:12px;font-weight:600;color:#6b6b72;text-transform:uppercase;letter-spacing:.06em">Prizes</span>
+          <button onClick="{{ resetAll }}" style="background:#f1f1f4;border:none;color:#444;font-weight:600;font-size:12px;padding:6px 12px;border-radius:999px;cursor:pointer;transition:background .2s" style-hover="background:#e4e4e9">Reset quantities</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <sc-for list="{{ adminPrizes }}" as="p" hint-placeholder-count="8">
+            <div style="{{ p.rowStyle }}">
+              <div style="{{ p.dotStyle }}"></div>
+              <input value="{{ p.name }}" onInput="{{ p.onName }}" style="flex:1;min-width:0;padding:7px 11px;border:1.5px solid #e6e6ea;border-radius:999px;font-size:13px;color:#111;background:#fff;outline:none" style-focus="border-color:#2BB0F4;box-shadow:0 0 0 3px rgba(43,176,244,.16)">
+              <input value="{{ p.qty }}" onInput="{{ p.onQty }}" type="number" min="0" title="Quantity" style="width:50px;flex:0 0 auto;padding:7px 8px;border:1.5px solid #e6e6ea;border-radius:10px;font-size:13px;color:#111;text-align:center;background:#fff;outline:none" style-focus="border-color:#2BB0F4">
+              <input value="{{ p.weight }}" onInput="{{ p.onWeight }}" type="number" min="1" title="Probability weight" style="width:46px;flex:0 0 auto;padding:7px 6px;border:1.5px solid #e6e6ea;border-radius:10px;font-size:13px;color:#7a7a82;text-align:center;background:#fff;outline:none" style-focus="border-color:#2BB0F4">
+              <button onClick="{{ p.toggleSoft }}" title="Hide / restore" style="{{ p.eyeStyle }}">{{ p.eyeLabel }}</button>
+              <button onClick="{{ p.hardDelete }}" title="Delete" style="width:30px;height:30px;flex:0 0 auto;border:none;border-radius:8px;background:transparent;color:#c0444a;font-size:14px;cursor:pointer;transition:background .15s" style-hover="background:#fdeaea">✕</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- options -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#6b6b72;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Options</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <button onClick="{{ toggleSound }}" style="{{ soundBtnStyle }}">
+            <span>{{ soundLabel }}</span>
+            <span style="{{ soundDotStyle }}"></span>
+          </button>
+          <div style="display:flex;gap:9px">
+            <button onClick="{{ exportState }}" style="flex:1;background:#f1f1f4;border:none;color:#333;font-weight:600;font-size:13px;padding:11px;border-radius:999px;cursor:pointer;transition:background .2s" style-hover="background:#e4e4e9">Export JSON</button>
+            <button onClick="{{ importClick }}" style="flex:1;background:#f1f1f4;border:none;color:#333;font-weight:600;font-size:13px;padding:11px;border-radius:999px;cursor:pointer;transition:background .2s" style-hover="background:#e4e4e9">Import JSON</button>
+          </div>
+          <input ref="{{ setImportRef }}" onChange="{{ onImportFile }}" type="file" accept="application/json" style="display:none">
+        </div>
+      </div>
+
+      <!-- history -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#6b6b72;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Spin history</div>
+        <sc-if value="{{ hasHistory }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;padding-right:4px">
+            <sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="{{ h.pillStyle }}">{{ h.name }}</span>
+                <span style="font-size:12px;color:#9a9aa0;flex:0 0 auto">{{ h.time }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noHistory }}" hint-placeholder-val="{{ true }}">
+          <div style="font-size:13px;color:#a0a0a6;padding:6px 2px">No spins yet.</div>
+        </sc-if>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#3c081b&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;spinSeconds&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:4.5,&quot;min&quot;:2,&quot;max&quot;:8,&quot;step&quot;:0.5,&quot;tsType&quot;:&quot;number&quot;},&quot;confetti&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  palette = ['#2BB0F4','#FB3A2E','#2ECC6F','#B583E6','#EEF53A','#FF8A3D','#FF5FA2','#18C8B4','#6C5CE7','#A8E05F','#FF6B5B','#4D7CFF'];
+  _nid = 100;
+
+  makePrizes() {
+    const d = [
+      ['Sticker Pack', 40, 30], ['Enamel Pin', 25, 20], ['Tote Bag', 15, 12],
+      ['Dev T-Shirt', 10, 8], ['Cozy Hoodie', 4, 4], ['Water Bottle', 12, 10],
+      ['Snapback Cap', 8, 6], ['Crew Socks', 18, 14], ['Notebook', 20, 16],
+      ['Mech Keyboard', 1, 1], ['Camp Mug', 14, 11]
+    ];
+    return d.map((x, i) => ({ id: 'p' + (i + 1), name: x[0], qty: x[1], initialQty: x[1], weight: x[2], color: this.palette[i % this.palette.length], deleted: false }));
+  }
+
+  state = {
+    prizes: this.makePrizes(),
+    rotation: 0,
+    rotorTransition: 'none',
+    spinning: false,
+    modalOpen: false,
+    modalClosing: false,
+    winner: null,
+    adminOpen: false,
+    soundOn: true,
+    history: [],
+    hoveredId: null,
+    newName: '', newQty: '10', newWeight: '10', newColor: this.palette[5]
+  };
+
+  setHover(id) { if (this.state.spinning) return; if (this.state.hoveredId !== id) this.setState({ hoveredId: id }); }
+
+  componentWillUnmount() {
+    clearTimeout(this._spinT); clearTimeout(this._dT); cancelAnimationFrame(this._raf);
+  }
+
+  // ---- geometry ----
+  polar(cx, cy, r, a) { const t = a * Math.PI / 180; return { x: cx + r * Math.sin(t), y: cy - r * Math.cos(t) }; }
+  arcPath(cx, cy, r, s, e) {
+    const a = this.polar(cx, cy, r, s), b = this.polar(cx, cy, r, e);
+    const large = (e - s) > 180 ? 1 : 0;
+    return `M ${cx} ${cy} L ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)} Z`;
+  }
+  contrast(hex) {
+    const c = hex.replace('#', ''); const r = parseInt(c.substr(0, 2), 16), g = parseInt(c.substr(2, 2), 16), b = parseInt(c.substr(4, 2), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#12110F' : '#FFFFFF';
+  }
+  trunc(s, n) { return s.length > n ? s.slice(0, Math.max(1, n - 1)).trim() + '\u2026' : s; }
+
+  geometry() {
+    const avail = this.state.prizes.filter(p => !p.deleted && p.qty > 0);
+    const cx = 300, cy = 300, r = 262;
+    const tot = avail.reduce((a, p) => a + p.weight, 0) || 1;
+    let acc = 0; const segments = [];
+    avail.forEach(p => {
+      const ang = p.weight / tot * 360, start = acc, end = acc + ang, mid = (start + end) / 2;
+      segments.push({ id: p.id, name: p.name, color: p.color, angle: ang, start, end, mid });
+      acc = end;
+    });
+    return { avail, cx, cy, r, tot, segments };
+  }
+
+  // ---- spin ----
+  pickWinner(avail) {
+    const tot = avail.reduce((a, p) => a + p.weight, 0);
+    let r = Math.random() * tot;
+    for (const p of avail) { r -= p.weight; if (r <= 0) return p; }
+    return avail[avail.length - 1];
+  }
+
+  spin() {
+    const g = this.geometry();
+    if (this.state.spinning || this.state.modalOpen || g.avail.length === 0) return;
+    const winner = this.pickWinner(g.avail);
+    const idx = g.avail.findIndex(p => p.id === winner.id);
+    const seg = g.segments[idx];
+    const spins = 4 + Math.floor(Math.random() * 3);
+    const jitter = g.avail.length > 1 ? (Math.random() - 0.5) * seg.angle * 0.6 : 0;
+    const targetMid = seg.mid + jitter;
+    const cur = this.state.rotation;
+    const needed = ((-targetMid - cur) % 360 + 360) % 360;
+    const final = cur + spins * 360 + needed;
+    const dur = this.props.spinSeconds ?? 4.5;
+    this.setState({ spinning: true, hoveredId: null, modalOpen: false, modalClosing: false, rotorTransition: `transform ${dur}s cubic-bezier(.33,0,.12,1)`, rotation: final });
+    clearTimeout(this._spinT);
+    this._spinT = setTimeout(() => this.onSpinEnd(winner.id), dur * 1000 + 40);
+  }
+
+  onSpinEnd(id) {
+    const prize = this.state.prizes.find(p => p.id === id);
+    if (!prize) { this.setState({ spinning: false }); return; }
+    const entry = { time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), name: prize.name, color: prize.color };
+    this.setState(s => ({
+      prizes: s.prizes.map(p => p.id === id ? { ...p, qty: Math.max(0, p.qty - 1) } : p),
+      history: [entry, ...s.history].slice(0, 100),
+      spinning: false, modalOpen: true, modalClosing: false,
+      winner: { name: prize.name, color: prize.color }
+    }));
+    if (this.props.confetti ?? true) this.fireConfetti();
+    this.playWin();
+  }
+
+  dismiss() {
+    this.setState({ modalClosing: true });
+    clearTimeout(this._dT);
+    this._dT = setTimeout(() => {
+      const r = ((this.state.rotation % 360) + 360) % 360;
+      this.setState({ modalOpen: false, modalClosing: false, rotorTransition: 'none', rotation: r });
+    }, 200);
+  }
+  stop(e) { e.stopPropagation(); }
+
+  // ---- confetti ----
+  setConfettiCanvas = (el) => { this.canvas = el; };
+  fireConfetti() {
+    const canvas = this.canvas; if (!canvas) return;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    const cols = this.palette;
+    const parts = [];
+    for (let i = 0; i < 150; i++) parts.push({
+      x: w / 2 + (Math.random() - 0.5) * 240, y: h * 0.34,
+      vx: (Math.random() - 0.5) * 15, vy: Math.random() * -13 - 4,
+      g: 0.34 + Math.random() * 0.18, size: 6 + Math.random() * 9,
+      rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.35,
+      color: cols[i % cols.length], shape: Math.random() < 0.5 ? 'r' : 'c'
+    });
+    cancelAnimationFrame(this._raf);
+    const start = performance.now();
+    const tick = (t) => {
+      const el = (t - start) / 1000;
+      ctx.clearRect(0, 0, w, h);
+      let alive = false;
+      parts.forEach(p => {
+        p.vy += p.g; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.rot += p.vr;
+        const life = Math.max(0, 1 - el / 3.2);
+        if (life > 0 && p.y < h + 50) {
+          alive = true;
+          ctx.save(); ctx.globalAlpha = life; ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.color;
+          if (p.shape === 'r') ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+          else { ctx.beginPath(); ctx.arc(0, 0, p.size / 2, 0, 6.3); ctx.fill(); }
+          ctx.restore();
+        }
+      });
+      if (alive) this._raf = requestAnimationFrame(tick); else ctx.clearRect(0, 0, w, h);
+    };
+    this._raf = requestAnimationFrame(tick);
+  }
+
+  playWin() {
+    if (!this.state.soundOn) return;
+    try {
+      const A = this._actx || (this._actx = new (window.AudioContext || window.webkitAudioContext)());
+      const now = A.currentTime; const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((f, i) => {
+        const o = A.createOscillator(), g = A.createGain();
+        o.type = 'triangle'; o.frequency.value = f; o.connect(g); g.connect(A.destination);
+        const st = now + i * 0.09;
+        g.gain.setValueAtTime(0, st); g.gain.linearRampToValueAtTime(0.16, st + 0.02); g.gain.exponentialRampToValueAtTime(0.001, st + 0.4);
+        o.start(st); o.stop(st + 0.42);
+      });
+    } catch (e) {}
+  }
+
+  // ---- admin ----
+  updatePrize(id, field, value) { this.setState(s => ({ prizes: s.prizes.map(p => p.id === id ? { ...p, [field]: value } : p) })); }
+  addPrize() {
+    const n = (this.state.newName || '').trim(); if (!n) return;
+    const q = Math.max(0, parseInt(this.state.newQty, 10) || 0);
+    const w = Math.max(1, parseFloat(this.state.newWeight) || 1);
+    const prize = { id: 'p' + (this._nid++), name: n, qty: q, initialQty: q, weight: w, color: this.state.newColor, deleted: false };
+    this.setState(s => ({ prizes: [...s.prizes, prize], newName: '', newQty: '10', newWeight: '10' }));
+  }
+  resetAll() { this.setState(s => ({ prizes: s.prizes.map(p => ({ ...p, qty: p.initialQty, deleted: false })) })); }
+  toggleAdmin = () => this.setState(s => ({ adminOpen: !s.adminOpen }));
+  closeAdmin = () => this.setState({ adminOpen: false });
+  toggleSound = () => this.setState(s => ({ soundOn: !s.soundOn }));
+
+  setImportRef = (el) => { this.importInput = el; };
+  importClick = () => { if (this.importInput) this.importInput.click(); };
+  onImportFile = (e) => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const obj = JSON.parse(reader.result);
+        this.setState({
+          prizes: Array.isArray(obj.prizes) ? obj.prizes : this.state.prizes,
+          history: Array.isArray(obj.history) ? obj.history : this.state.history,
+          soundOn: obj.soundOn !== undefined ? !!obj.soundOn : this.state.soundOn
+        });
+      } catch (err) {}
+    };
+    reader.readAsText(f); e.target.value = '';
+  };
+  exportState() {
+    const data = JSON.stringify({ prizes: this.state.prizes, history: this.state.history, soundOn: this.state.soundOn }, null, 2);
+    try {
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'spin-the-wheel-state.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) { try { navigator.clipboard.writeText(data); } catch (_) {} }
+  }
+
+  renderVals() {
+    const accent = this.props.accent ?? '#6C5CE7';
+    const g = this.geometry();
+    const { avail, cx, cy, r, tot, segments } = g;
+    const isEmpty = avail.length === 0, isSingle = avail.length === 1, isMulti = avail.length >= 2;
+
+    const hov = this.state.spinning ? null : this.state.hoveredId;
+    const anyHover = hov != null;
+    const segOut = segments.map((s) => {
+      const flip = (s.mid > 90 && s.mid < 270) ? ' rotate(180)' : '';
+      const maxc = Math.max(5, Math.min(15, Math.round(s.angle / 3)));
+      const isHov = hov === s.id;
+      const dim = anyHover && !isHov;
+      const mr = s.mid * Math.PI / 180;
+      const off = isHov ? 13 : 0;
+      return {
+        id: s.id,
+        path: this.arcPath(cx, cy, r, s.start, s.end),
+        fill: s.color,
+        textColor: this.contrast(s.color),
+        fontSize: Math.max(11, Math.min(20, s.angle * 0.5 + 8)),
+        textTransform: `translate(${cx} ${cy}) rotate(${s.mid.toFixed(2)}) translate(0 ${(-(r * 0.6)).toFixed(2)})${flip}`,
+        label: this.trunc(s.name, maxc),
+        strokeW: isHov ? 4 : 2,
+        groupStyle: { transition: 'transform .22s ease, opacity .22s ease', cursor: 'pointer', opacity: dim ? 0.32 : 1, transform: isHov ? `translate(${(off * Math.sin(mr)).toFixed(1)}px, ${(-off * Math.cos(mr)).toFixed(1)}px)` : 'none' },
+        onEnter: () => this.setHover(s.id),
+        onLeave: () => this.setHover(null)
+      };
+    });
+    const dots = segments.map(s => { const pt = this.polar(cx, cy, r, s.start); return { x: pt.x.toFixed(2), y: pt.y.toFixed(2) }; });
+    const single = isSingle ? { fill: avail[0].color, textColor: this.contrast(avail[0].color), label: this.trunc(avail[0].name, 16) } : { fill: '#161618', textColor: '#fff', label: '' };
+
+    const legendPrizes = this.state.prizes.map(p => {
+      const dead = p.deleted || p.qty <= 0;
+      const bg = dead ? '#26262a' : p.color;
+      const tc = dead ? '#8a8a90' : this.contrast(p.color);
+      const pct = !dead ? Math.round(p.weight / tot * 100) : 0;
+      const isHov = !dead && hov === p.id;
+      const dimP = anyHover && !isHov;
+      return {
+        name: p.name, badgeText: String(p.qty), pctLabel: dead ? '\u2014' : (pct + '%'),
+        pillStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '11px 15px', borderRadius: '999px', background: bg, opacity: dimP ? 0.5 : 1, transform: isHov ? 'scale(1.03)' : 'none', boxShadow: isHov ? '0 0 0 2px #fff, 0 8px 22px rgba(0,0,0,.35)' : 'none', cursor: dead ? 'default' : 'pointer', transition: 'background .4s ease, transform .15s ease, box-shadow .15s ease, opacity .15s ease, filter .2s ease' },
+        nameStyle: { fontWeight: 600, fontSize: '14px', color: tc, textDecoration: dead ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 },
+        pctStyle: { fontSize: '11px', color: tc, opacity: 0.78, fontWeight: 600 },
+        badgeStyle: { minWidth: '24px', textAlign: 'center', fontWeight: 700, fontSize: '12px', padding: '2px 8px', borderRadius: '999px', background: dead ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.16)', color: tc },
+        onEnter: dead ? null : (() => this.setHover(p.id)),
+        onLeave: () => this.setHover(null)
+      };
+    });
+
+    const adminPrizes = this.state.prizes.map(p => ({
+      name: p.name, qty: p.qty, weight: p.weight,
+      rowStyle: { display: 'flex', alignItems: 'center', gap: '7px', padding: '8px', borderRadius: '14px', background: p.deleted ? '#f0f0f3' : '#f7f7f8', opacity: p.deleted ? 0.55 : 1, transition: 'opacity .2s' },
+      dotStyle: { width: '14px', height: '14px', borderRadius: '4px', background: p.color, flex: '0 0 auto', boxShadow: '0 0 0 1px rgba(0,0,0,.08)' },
+      eyeLabel: p.deleted ? '\u21BA' : '\u2298',
+      eyeStyle: { width: '30px', height: '30px', flex: '0 0 auto', border: 'none', borderRadius: '8px', background: 'transparent', color: '#7a7a82', fontSize: '15px', cursor: 'pointer', transition: 'background .15s' },
+      onName: (e) => this.updatePrize(p.id, 'name', e.target.value),
+      onQty: (e) => this.updatePrize(p.id, 'qty', Math.max(0, parseInt(e.target.value || '0', 10) || 0)),
+      onWeight: (e) => this.updatePrize(p.id, 'weight', Math.max(1, parseFloat(e.target.value || '1') || 1)),
+      toggleSoft: () => this.updatePrize(p.id, 'deleted', !p.deleted),
+      hardDelete: () => this.setState(s => ({ prizes: s.prizes.filter(x => x.id !== p.id) }))
+    }));
+
+    const newColorSwatches = this.palette.map(c => ({
+      swStyle: { width: '24px', height: '24px', borderRadius: '7px', background: c, cursor: 'pointer', boxShadow: this.state.newColor === c ? ('0 0 0 2px #fff, 0 0 0 4px ' + c) : '0 0 0 1px rgba(0,0,0,.12)' },
+      pick: () => this.setState({ newColor: c })
+    }));
+
+    const history = this.state.history.map(h => ({
+      time: h.time, name: h.name,
+      pillStyle: { display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: '999px', background: h.color, color: this.contrast(h.color), fontSize: '12px', fontWeight: 600, maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+    }));
+
+    const spinDisabled = this.state.spinning || this.state.modalOpen || isEmpty;
+    const w = this.state.winner || { name: '', color: accent };
+
+    return {
+      rotorStyle: { position: 'absolute', inset: 0, transform: `rotate(${this.state.rotation}deg)`, transition: this.state.rotorTransition, transformOrigin: 'center', willChange: 'transform' },
+      isEmpty, isSingle, isMulti, single,
+      segments: segOut, dots,
+      legendPrizes, activeCount: avail.length,
+      spinLabel: this.state.spinning ? 'SPINNING' : (isEmpty ? 'SOLD OUT' : 'SPIN'),
+      spin: () => this.spin(),
+      hubStyle: {
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+        width: 'clamp(96px,27%,166px)', aspectRatio: '1', borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: '5px solid rgba(255,255,255,.94)', background: `linear-gradient(135deg,#2BB0F4,${accent})`,
+        boxShadow: spinDisabled ? '0 6px 18px rgba(0,0,0,.35)' : '0 12px 36px rgba(108,92,231,.45)',
+        cursor: spinDisabled ? 'not-allowed' : 'pointer', opacity: spinDisabled ? 0.6 : 1,
+        pointerEvents: spinDisabled ? 'none' : 'auto', zIndex: 7,
+        transition: 'box-shadow .25s, opacity .25s, transform .15s'
+      },
+      modalOpen: this.state.modalOpen, winnerName: w.name,
+      modalStripeStyle: { position: 'absolute', top: 0, left: 0, right: 0, height: '5px', background: w.color },
+      modalCardStyle: {
+        position: 'relative', overflow: 'hidden', textAlign: 'center', width: '100%', maxWidth: '440px',
+        padding: '40px 36px 36px', borderRadius: '20px',
+        background: 'rgba(255,255,255,0.78)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+        boxShadow: '0 30px 80px rgba(0,0,0,.5)',
+        animation: this.state.modalClosing ? 'modalOut .2s ease forwards' : 'modalIn .3s cubic-bezier(.2,.8,.2,1) both'
+      },
+      dismiss: () => this.dismiss(), stop: (e) => this.stop(e),
+      panelStyle: {
+        position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(440px,92vw)', zIndex: 70,
+        background: '#fff', display: 'flex', flexDirection: 'column',
+        boxShadow: '-24px 0 60px rgba(0,0,0,.4)',
+        transform: this.state.adminOpen ? 'translateX(0)' : 'translateX(105%)',
+        transition: 'transform .38s cubic-bezier(.2,.8,.2,1)'
+      },
+      toggleAdmin: this.toggleAdmin, closeAdmin: this.closeAdmin,
+      adminPrizes, resetAll: () => this.resetAll(),
+      newName: this.state.newName, newQty: this.state.newQty, newWeight: this.state.newWeight,
+      onNewName: (e) => this.setState({ newName: e.target.value }),
+      onNewQty: (e) => this.setState({ newQty: e.target.value }),
+      onNewWeight: (e) => this.setState({ newWeight: e.target.value }),
+      newColorSwatches, addPrize: () => this.addPrize(),
+      toggleSound: this.toggleSound, soundLabel: this.state.soundOn ? 'Celebration sound: on' : 'Celebration sound: off',
+      soundBtnStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f1f1f4', border: 'none', color: '#333', fontWeight: 600, fontSize: '13px', padding: '11px 16px', borderRadius: '999px', cursor: 'pointer' },
+      soundDotStyle: { width: '12px', height: '12px', borderRadius: '50%', background: this.state.soundOn ? '#2ECC6F' : '#c8c8cc', flex: '0 0 auto' },
+      exportState: () => this.exportState(), importClick: this.importClick, onImportFile: this.onImportFile, setImportRef: this.setImportRef,
+      setConfettiCanvas: this.setConfettiCanvas,
+      history, hasHistory: history.length > 0, noHistory: history.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>
